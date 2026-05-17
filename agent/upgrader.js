@@ -3,7 +3,7 @@ import { execSync } from "child_process";
 import { calculateRisk } from "./risk.js";
 
 export function upgradePackages() {
-
+    let hasChanges = false;
     const raw = fs.readFileSync(
         "upgrade-plan.json",
         "utf-8"
@@ -23,25 +23,25 @@ export function upgradePackages() {
             );
 
         console.log(`
-Calculated Risk:
-${actualRisk}
-`);
+            Calculated Risk:
+            ${actualRisk}
+        `);
 
         if (actualRisk !== "low") {
 
             console.log(`
-Skipping ${item.package}
-because calculated risk is
-${actualRisk}
-`);
+                Skipping ${item.package}
+                because calculated risk is
+                ${actualRisk}
+            `);
 
             continue;
         }
 
         console.log(`
-Upgrading:
-${item.package}@${item.targetVersion}
-`);
+            Upgrading:
+            ${item.package}@${item.targetVersion}
+        `);
 
         try {
 
@@ -51,16 +51,18 @@ ${item.package}@${item.targetVersion}
             );
 
             console.log(`
-SUCCESS:
-${item.package}
-`);
+                SUCCESS:
+                ${item.package}
+            `);
+            hasChanges = true;
 
         } catch (err) {
 
             console.log(`
-FAILED:
-${item.package}
-`);
+                FAILED:
+                ${item.package}
+            `);
         }
     }
+    return hasChanges;
 }

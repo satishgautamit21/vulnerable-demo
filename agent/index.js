@@ -25,6 +25,7 @@ async function run() {
     "\nStarting Upgrades...\n"
   );
 
+  const hasChanges =
   upgradePackages();
 
   console.log(
@@ -43,16 +44,12 @@ async function run() {
     console.log(`
 Application Stable
 `);
-<<<<<<< Updated upstream
-createPullRequest();
-=======
 if (!hasChanges) {
   console.log(`
 No dependency changes detected.
 Skipping PR creation.
 `);
 }
->>>>>>> Stashed changes
   }
 }
 
