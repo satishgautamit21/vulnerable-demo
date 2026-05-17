@@ -22,9 +22,15 @@ export function calculateRisk(
     return "high";
   }
 
+  const diff = semver.diff(current, target);
+
+  if (diff === "major") {
+    return "high";
+  }
+
   if (
-    semver.minor(current)
-    !== semver.minor(target)
+    diff === "minor"
+    && semver.major(current) !== 0
   ) {
     return "moderate";
   }
