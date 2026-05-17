@@ -1,12 +1,3 @@
 {
-  "upgrades": [
-    {
-      "package": "axios",
-      "currentVersion": "^0.21.0",
-      "targetVersion": "0.27.2",
-      "severity": "high",
-      "risk": "low",
-      "reason": "Upgrade to the latest 0.27.x release to address known high‑severity vulnerabilities while staying within the same major version, avoiding breaking changes associated with the 1.x series."
-    }
-  ]
+  "upgrades": []
 }
