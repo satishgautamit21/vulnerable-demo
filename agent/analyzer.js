@@ -67,37 +67,33 @@ export async function analyzeAudit() {
 
     console.log(summary);
 
-    const prompt = `
-    You are a senior dependency security expert.
+    const prompt = `You are a senior dependency security expert. Your task is to RECOMMEND SAFE UPGRADES for ALL vulnerable packages.
 
-    Analyze vulnerabilities.
+For EACH vulnerable package in the list:
+1. Find the latest STABLE version that fixes the vulnerability
+2. Prefer patch/minor upgrades (same major version)
+3. For 0.x versions, minor upgrades are acceptable
+4. Include every package with a fixAvailable solution
+5. Do NOT return an empty upgrades array if vulnerabilities exist
 
-    Recommend SAFE stable upgrades.
+Current vulnerable packages:
+${JSON.stringify(summary, null, 2)}
 
-    Avoid risky major upgrades.
+For each package, recommend the safest upgrade version that fixes the vulnerability.
 
-    Return ONLY valid JSON.
-
-    PACKAGE.JSON:
-    ${packageJson}
-
-    VULNERABILITY SUMMARY::
-    ${JSON.stringify(summary, null, 2)}
-
-    Expected JSON format:
-
+Return ONLY valid JSON with NO other text:
+{
+  "upgrades": [
     {
-    "upgrades": [
-        {
-        "package": "",
-        "currentVersion": "",
-        "targetVersion": "",
-        "severity": "",
-        "risk": "",
-        "reason": ""
-        }
-    ]
-    }`;
+      "package": "package-name",
+      "currentVersion": "0.21.0",
+      "targetVersion": "0.27.2",
+      "severity": "high",
+      "risk": "low",
+      "reason": "Brief explanation"
+    }
+  ]
+}`;
 
     console.log(
         "\nSending to AI...\n"
