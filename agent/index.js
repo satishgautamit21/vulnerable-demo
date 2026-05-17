@@ -10,8 +10,8 @@ from "./validator.js";
 import { rollbackChanges }
 from "./rollback.js";
 
-import { createPullRequest }
-from "./gitAgent.js";
+// import { createPullRequest }
+// from "./gitAgent.js";
 
 async function run() {
 
@@ -43,7 +43,16 @@ async function run() {
     console.log(`
 Application Stable
 `);
+<<<<<<< Updated upstream
 createPullRequest();
+=======
+if (!hasChanges) {
+  console.log(`
+No dependency changes detected.
+Skipping PR creation.
+`);
+}
+>>>>>>> Stashed changes
   }
 }
 
