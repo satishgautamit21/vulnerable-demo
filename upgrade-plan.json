@@ -1,20 +1,28 @@
 {
   "upgrades": [
     {
-      "package": "lodash",
-      "currentVersion": "^4.17.15",
-      "targetVersion": "^4.17.21",
-      "severity": "high",
-      "risk": "low",
-      "reason": "Minor patch that resolves known vulnerabilities without breaking API compatibility."
-    },
-    {
       "package": "axios",
       "currentVersion": "^0.21.0",
       "targetVersion": "^1.6.7",
       "severity": "high",
-      "risk": "medium",
-      "reason": "Major version upgrade required to fix critical security issues. The 1.x series introduces breaking changes; review migration guides and test thoroughly before deploying."
+      "risk": "major",
+      "reason": "The latest 1.x release includes critical security fixes for the high‑severity vulnerability. It is a major version bump, so review breaking changes in the migration guide before upgrading."
+    },
+    {
+      "package": "lodash",
+      "currentVersion": "^4.17.21",
+      "targetVersion": "^4.17.21",
+      "severity": "high",
+      "risk": "none",
+      "reason": "No newer version is available; the current 4.17.21 release already contains the necessary security patches."
+    },
+    {
+      "package": "minimist",
+      "currentVersion": "^0.0.8",
+      "targetVersion": "^0.0.8",
+      "severity": "critical",
+      "risk": "none",
+      "reason": "The critical vulnerability requires a major upgrade to 1.2.8, which introduces breaking changes. Until the application can be refactored to use the new API, it is safer to keep the current version and monitor for a compatible patch."
     }
   ]
 }
