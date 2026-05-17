@@ -28,7 +28,7 @@ jobs:
         run: npm install
 
       - name: Run Audit
-        run: npm audit --json > audit-report.json
+        run: npm audit --json > audit-report.json || true
 
       - name: Run AI Agent
         run: npm run agent
