@@ -6,7 +6,23 @@
       "targetVersion": "0.27.2",
       "severity": "high",
       "risk": "low",
-      "reason": "Upgrade to the latest 0.27.x release to address known high‑severity vulnerabilities while staying within the same major version, avoiding breaking changes associated with the 1.x series."
+      "reason": "Latest 0.x release 0.27.2 includes all security patches for the known vulnerabilities."
+    },
+    {
+      "package": "lodash",
+      "currentVersion": "^4.17.21",
+      "targetVersion": "4.17.21",
+      "severity": "high",
+      "risk": "low",
+      "reason": "Version 4.17.21 is the current stable release and contains the necessary security fixes."
+    },
+    {
+      "package": "minimist",
+      "currentVersion": "^0.0.8",
+      "targetVersion": "1.2.8",
+      "severity": "critical",
+      "risk": "low",
+      "reason": "The only available fix is a major version bump to 1.2.8, which resolves the critical vulnerability."
     }
   ]
 }
