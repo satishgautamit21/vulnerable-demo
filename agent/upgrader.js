@@ -16,15 +16,16 @@ export function upgradePackages() {
 
     for (const item of upgrades) {
 
+        const planRisk = item.risk || "unknown";
         const actualRisk =
-            calculateRisk(
+            item.risk || calculateRisk(
                 item.currentVersion,
                 item.targetVersion
             );
 
         console.log(`
-            Calculated Risk:
-            ${actualRisk}
+            Plan risk: ${planRisk}
+            Calculated risk: ${actualRisk}
         `);
 
         if (actualRisk !== "low") {
