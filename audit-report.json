@@ -7,22 +7,6 @@
       "isDirect": true,
       "via": [
         {
-          "source": 1090049,
-          "name": "axios",
-          "dependency": "axios",
-          "title": "Axios vulnerable to Server-Side Request Forgery",
-          "url": "https://github.com/advisories/GHSA-4w2v-q235-vp99",
-          "severity": "moderate",
-          "cwe": [
-            "CWE-918"
-          ],
-          "cvss": {
-            "score": 5.9,
-            "vectorString": "CVSS:3.1/AV:N/AC:H/PR:N/UI:N/S:U/C:H/I:N/A:N"
-          },
-          "range": "<0.21.1"
-        },
-        {
           "source": 1097679,
           "name": "axios",
           "dependency": "axios",
@@ -37,23 +21,6 @@
             "vectorString": "CVSS:3.1/AV:N/AC:L/PR:N/UI:R/S:U/C:H/I:N/A:N"
           },
           "range": ">=0.8.1 <0.28.0"
-        },
-        {
-          "source": 1102326,
-          "name": "axios",
-          "dependency": "axios",
-          "title": "axios Inefficient Regular Expression Complexity vulnerability",
-          "url": "https://github.com/advisories/GHSA-cph5-m8f7-6c5x",
-          "severity": "high",
-          "cwe": [
-            "CWE-400",
-            "CWE-1333"
-          ],
-          "cvss": {
-            "score": 7.5,
-            "vectorString": "CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:U/C:N/I:N/A:H"
-          },
-          "range": "<0.21.2"
         },
         {
           "source": 1111034,
@@ -295,7 +262,11 @@
       "nodes": [
         "node_modules/axios"
       ],
-      "fixAvailable": true
+      "fixAvailable": {
+        "name": "axios",
+        "version": "1.16.1",
+        "isSemVerMajor": true
+      }
     },
     "lodash": {
       "name": "lodash",
@@ -418,12 +389,12 @@
       "total": 3
     },
     "dependencies": {
-      "prod": 12,
-      "dev": 238,
+      "prod": 32,
+      "dev": 247,
       "optional": 33,
-      "peer": 10,
+      "peer": 8,
       "peerOptional": 0,
-      "total": 249
+      "total": 278
     }
   }
 }
