@@ -31,12 +31,14 @@ jobs:
         run: npm audit --json > audit-report.json || true
 
       - name: Run AI Agent
+        id: ai-agent
         run: npm run agent
         env:
           OPENROUTER_API_KEY:
             ${{ secrets.OPENROUTER_API_KEY }}
 
       - name: Create Pull Request
+        if: steps.ai-agent.outputs.has_upgrades == 'true'
         uses: peter-evans/create-pull-request@v7
         with:
           commit-message: AI dependency upgrades

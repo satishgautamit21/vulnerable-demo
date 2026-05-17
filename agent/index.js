@@ -1,3 +1,5 @@
+import fs from "fs";
+
 import { analyzeAudit }
 from "./analyzer.js";
 
@@ -26,7 +28,7 @@ async function run() {
   );
 
   const hasChanges =
-  upgradePackages();
+    upgradePackages();
 
   console.log(
     "\nStarting Validation...\n"
@@ -39,17 +41,48 @@ async function run() {
 
     rollbackChanges();
 
+    // tell GitHub Action NO
+    if (process.env.GITHUB_OUTPUT) {
+
+      fs.appendFileSync(
+        process.env.GITHUB_OUTPUT,
+        `has_upgrades=false\n`
+      );
+    }
+
   } else {
 
     console.log(`
 Application Stable
 `);
-if (!hasChanges) {
-  console.log(`
+
+    if (!hasChanges) {
+
+      console.log(`
 No dependency changes detected.
 Skipping PR creation.
 `);
-}
+
+      // tell GitHub Action NO
+      if (process.env.GITHUB_OUTPUT) {
+
+        fs.appendFileSync(
+          process.env.GITHUB_OUTPUT,
+          `has_upgrades=false\n`
+        );
+      }
+
+    } else {
+
+      // tell GitHub Action YES
+      if (process.env.GITHUB_OUTPUT) {
+
+        fs.appendFileSync(
+          process.env.GITHUB_OUTPUT,
+          `has_upgrades=true\n`
+        );
+      }
+    }
   }
 }
 
