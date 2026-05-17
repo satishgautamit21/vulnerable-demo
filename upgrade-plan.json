@@ -1,0 +1,20 @@
+{
+  "upgrades": [
+    {
+      "package": "lodash",
+      "currentVersion": "^4.17.15",
+      "targetVersion": "^4.17.21",
+      "severity": "high",
+      "risk": "low",
+      "reason": "Minor patch that resolves known vulnerabilities without breaking API compatibility."
+    },
+    {
+      "package": "axios",
+      "currentVersion": "^0.21.0",
+      "targetVersion": "^1.6.7",
+      "severity": "high",
+      "risk": "medium",
+      "reason": "Major version upgrade required to fix critical security issues. The 1.x series introduces breaking changes; review migration guides and test thoroughly before deploying."
+    }
+  ]
+}
