@@ -1,52 +1,38 @@
-import fs from "fs";
 import { execSync } from "child_process";
 
-export function upgradePackages(plan) {
-    let hasChanges = false;
-    fs.writeFileSync(
-        "upgrade-plan.json",
-        JSON.stringify(plan, null, 2)
+export function upgradePackage(
+  packageName,
+  version
+) {
+
+  console.log(`
+Upgrading:
+${packageName}@${version}
+`);
+
+  try {
+
+    execSync(
+      `npm install ${packageName}@${version}`,
+      {
+        stdio: "inherit"
+      }
     );
 
-    const upgrades =
-        plan.upgrades || [];
+    console.log(`
+SUCCESS:
+${packageName}@${version}
+`);
 
-    for (const item of upgrades) {
+    return true;
 
-        if (!item.targetVersion || item.targetVersion === item.currentVersion) {
-            console.log(`
-                Skipping ${item.package}
-                because targetVersion is missing or unchanged
-            `);
-            continue;
-        }
+  } catch (err) {
 
-        console.log(`
-            Upgrading:
-            ${item.package}@${item.targetVersion}
-            Plan risk: ${item.risk || "unknown"}
-        `);
+    console.log(`
+FAILED:
+${packageName}@${version}
+`);
 
-        try {
-
-            execSync(
-                `npm install ${item.package}@${item.targetVersion}`,
-                { stdio: "inherit" }
-            );
-
-            console.log(`
-                SUCCESS:
-                ${item.package}
-            `);
-            hasChanges = true;
-
-        } catch (err) {
-
-            console.log(`
-                FAILED:
-                ${item.package}
-            `);
-        }
-    }
-    return hasChanges;
+    return false;
+  }
 }

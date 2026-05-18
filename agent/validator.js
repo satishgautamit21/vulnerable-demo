@@ -1,40 +1,51 @@
-import { execSync }
-from "child_process";
+import { execSync } from "child_process";
 
 export function validateApp() {
 
   try {
 
-    console.log(
-      "\nRunning Tests...\n"
-    );
+    console.log(`
+Running Tests...
+`);
 
     execSync(
       "npm test",
-      { stdio: "inherit" }
+      {
+        stdio: "inherit"
+      }
     );
 
-    console.log(
-      "\nRunning Build...\n"
-    );
+    console.log(`
+Running Build...
+`);
 
     execSync(
       "npm run build",
-      { stdio: "inherit" }
+      {
+        stdio: "inherit"
+      }
     );
 
-    console.log(
-      "\nValidation Passed\n"
-    );
+    console.log(`
+Validation Passed
+`);
 
-    return true;
+    return {
+      success: true,
+      error: null
+    };
 
   } catch (err) {
 
-    console.log(
-      "\nValidation Failed\n"
-    );
+    console.log(`
+Validation Failed
+`);
 
-    return false;
+    return {
+      success: false,
+      error:
+        err?.message ||
+        "Unknown validation error"
+    };
   }
 }

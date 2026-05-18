@@ -1,32 +1,82 @@
-import { execSync }
-from "child_process";
+import { execSync } from "child_process";
 
-export function rollbackChanges() {
+export function createSnapshot() {
 
-  console.log(
-    "\nRolling Back Changes...\n"
-  );
+  console.log(`
+Creating git snapshot...
+`);
 
   try {
 
     execSync(
-      "git checkout package.json package-lock.json",
-      { stdio: "inherit" }
+      "git stash push --include-untracked",
+      {
+        stdio: "inherit"
+      }
     );
 
-    execSync(
-      "npm install",
-      { stdio: "inherit" }
-    );
-
-    console.log(
-      "\nRollback Successful\n"
-    );
+    console.log(`
+Snapshot created successfully.
+`);
 
   } catch (err) {
 
-    console.log(
-      "\nRollback Failed\n"
+    console.log(`
+Failed to create snapshot.
+`);
+  }
+}
+
+export function rollbackChanges() {
+
+  console.log(`
+Rolling back changes...
+`);
+
+  try {
+
+    execSync(
+      "git stash pop",
+      {
+        stdio: "inherit"
+      }
     );
+
+    console.log(`
+Rollback successful.
+`);
+
+  } catch (err) {
+
+    console.log(`
+Rollback failed.
+`);
+  }
+}
+
+export function discardSnapshot() {
+
+  console.log(`
+Discarding snapshot...
+`);
+
+  try {
+
+    execSync(
+      "git stash drop",
+      {
+        stdio: "inherit"
+      }
+    );
+
+    console.log(`
+Snapshot discarded.
+`);
+
+  } catch (err) {
+
+    console.log(`
+Failed to discard snapshot.
+`);
   }
 }

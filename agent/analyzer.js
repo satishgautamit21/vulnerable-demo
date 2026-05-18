@@ -5,142 +5,176 @@ import OpenAI from "openai";
 dotenv.config();
 
 const client = new OpenAI({
-    apiKey: process.env.OPENROUTER_API_KEY,
-    baseURL: "https://openrouter.ai/api/v1"
+  apiKey: process.env.OPENROUTER_API_KEY,
+  baseURL: "https://openrouter.ai/api/v1"
 });
 
-export async function analyzeAudit(failureContext = "") {
+function loadFailedVersions() {
 
-    console.log(
-        "\nReading audit report...\n"
-    );
+  try {
 
-    const raw = fs.readFileSync(
-        "audit-report.json",
+    return JSON.parse(
+      fs.readFileSync(
+        "failed-upgrades.json",
         "utf-8"
+      )
     );
 
-    const audit = JSON.parse(raw);
+  } catch {
 
-    const packageJson =
-        fs.readFileSync(
-            "package.json",
-            "utf-8"
-        );
+    return {};
+  }
+}
 
-    const packageData =
-        JSON.parse(packageJson);
+export async function analyzePackage(
+  vulnerability,
+  failureContext = ""
+) {
 
-    const dependencies = {
-        ...packageData.dependencies,
-        ...packageData.devDependencies
-    };
+  const failedVersions =
+    loadFailedVersions();
 
-    const vulnerabilities =
-        audit.vulnerabilities || {};
+  const failedForPackage =
+    failedVersions[
+      vulnerability.package
+    ] || [];
 
-    const summary = [];
+  const prompt = `
+You are a senior dependency remediation expert.
 
-    for (const [pkg, details]
-        of Object.entries(vulnerabilities)) {
+Your task:
+Recommend the BEST stable upgrade version
+for this vulnerable package.
 
-        summary.push({
-            package: pkg,
+Package Details:
+${JSON.stringify(vulnerability, null, 2)}
 
-            currentVersion:
-                dependencies[pkg] || "unknown",
+Rules:
+1. Recommend the latest stable version fixing the vulnerability
+2. Major upgrades ARE allowed
+3. Prefer stable production-safe versions
+4. Avoid beta, alpha, rc releases
+5. If previous versions failed validation,
+   avoid recommending them again
+6. Include fallbackVersion if possible
+7. Return ONLY valid JSON
 
-            severity:
-                details.severity,
+Previously failed versions:
+${JSON.stringify(failedForPackage)}
 
-            direct:
-                details.isDirect,
+${failureContext}
 
-            fixAvailable:
-                details.fixAvailable
-        });
-    }
-
-    console.log(
-    "\n=== CLEAN SUMMARY ===\n"
-    );
-
-    console.log(summary);
-
-    const prompt = `You are a senior dependency security expert. Your task is to RECOMMEND THE LATEST STABLE UPGRADE for each vulnerable package.
-
-For EACH vulnerable package in the list:
-1. Identify the latest stable version that fixes the vulnerability
-2. Use the newest available stable release even if it is a major upgrade
-3. If no fix is available, omit the package from upgrades
-4. Do not return an empty upgrades array when vulnerabilities exist and fixes are available
-5. Include a short reason and a risk label for each recommended upgrade
-
-${failureContext ? `Previous attempt failed with context:\n${failureContext}\nIf the previous selection caused validation failure, recommend alternate stable versions or skip packages that likely break the build. Trial both higher and lower stable versions if needed.\n\n` : ""}
-Current vulnerable packages:
-${JSON.stringify(summary, null, 2)}
-
-Return ONLY valid JSON with NO other text:
+Return format:
 {
-  "upgrades": [
-    {
-      "package": "package-name",
-      "currentVersion": "0.21.0",
-      "targetVersion": "1.16.1",
-      "severity": "high",
-      "risk": "low",
-      "reason": "Latest stable version fixing the vulnerability"
+  "package": "axios",
+  "targetVersion": "1.12.0",
+  "fallbackVersion": "1.11.0",
+  "risk": "high",
+  "reason": "Latest stable secure version"
+}
+`;
+
+  console.log(`
+Analyzing package:
+${vulnerability.package}
+`);
+
+  const response =
+    await client.chat.completions.create({
+      model: "openai/gpt-oss-20b:free",
+      messages: [
+        {
+          role: "user",
+          content: prompt
+        }
+      ],
+      temperature: 0
+    });
+
+  const raw =
+    response.choices[0]
+      .message.content;
+
+  console.log(`
+=== AI RESPONSE ===
+`);
+
+  console.log(raw);
+
+  const cleaned = raw
+    .replace(/```json/g, "")
+    .replace(/```/g, "")
+    .trim();
+
+  const jsonStart =
+    cleaned.indexOf("{");
+
+  const jsonEnd =
+    cleaned.lastIndexOf("}");
+
+  const safeJson =
+    cleaned.slice(
+      jsonStart,
+      jsonEnd + 1
+    );
+
+  return JSON.parse(safeJson);
+}
+
+export function getVulnerabilities() {
+
+  const raw = fs.readFileSync(
+    "audit-report.json",
+    "utf-8"
+  ).replace(/^\uFEFF/, "");
+
+  const audit = JSON.parse(raw);
+
+  const packageJson =
+    fs.readFileSync(
+      "package.json",
+      "utf-8"
+    );
+
+  const packageData =
+    JSON.parse(packageJson);
+
+  const dependencies = {
+    ...packageData.dependencies,
+    ...packageData.devDependencies
+  };
+
+  const vulnerabilities =
+    audit.vulnerabilities || {};
+
+  const summary = [];
+
+  for (const [pkg, details]
+    of Object.entries(vulnerabilities)) {
+
+    if (!details.fixAvailable) {
+      continue;
     }
-  ]
-}`;
 
-    console.log(
-        "\nSending to AI...\n"
-    );
+    summary.push({
+      package: pkg,
 
-    const response =
-        await client.chat.completions.create({
-            model: "openai/gpt-oss-20b:free",
-            messages: [
-                {
-                    role: "user",
-                    content: prompt
-                }
-            ],
-            temperature: 0
-        });
+      currentVersion:
+        dependencies[pkg] || "unknown",
 
-    const result =
-        response.choices[0]
-            .message.content;
+      severity:
+        details.severity,
 
-    console.log(
-        "\n=== AI RESPONSE ===\n"
-    );
+      direct:
+        details.isDirect,
 
-    console.log(result);
+      fixAvailable:
+        details.fixAvailable,
 
-    const cleaned = result
-        .replace(/```json/g, "")
-        .replace(/```/g, "")
-        .trim();
+      vulnerableRange:
+        details.range || "unknown"
+    });
+  }
 
-    const jsonStart =
-        cleaned.indexOf("{");
-
-    const jsonEnd =
-        cleaned.lastIndexOf("}");
-
-    const safeJson =
-        cleaned.slice(
-            jsonStart,
-            jsonEnd + 1
-        );
-
-    fs.writeFileSync(
-        "upgrade-plan.json",
-        safeJson
-    );
-
-    return JSON.parse(safeJson);
+  return summary;
 }

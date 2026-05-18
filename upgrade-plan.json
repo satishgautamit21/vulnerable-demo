@@ -2,27 +2,11 @@
   "upgrades": [
     {
       "package": "axios",
-      "currentVersion": "^0.27.2",
-      "targetVersion": "1.16.1",
+      "currentVersion": "^1.6.7",
+      "targetVersion": "1.6.7",
       "severity": "high",
       "risk": "low",
-      "reason": "No same‑major patch/minor release fixes the vulnerability; the latest stable major release 1.16.1 contains the fix."
-    },
-    {
-      "package": "lodash",
-      "currentVersion": "^4.17.21",
-      "targetVersion": "4.17.21",
-      "severity": "high",
-      "risk": "low",
-      "reason": "The current range already allows the latest stable 4.17.21, which includes the vulnerability fix."
-    },
-    {
-      "package": "minimist",
-      "currentVersion": "^0.0.8",
-      "targetVersion": "1.2.8",
-      "severity": "critical",
-      "risk": "low",
-      "reason": "The only available fix is in the major release 1.2.8; upgrading to this version resolves the critical vulnerability."
+      "reason": "Latest stable version (1.6.7) is outside the vulnerable range 1.0.0 - 1.15.1 and includes the security fix."
     }
   ]
 }
