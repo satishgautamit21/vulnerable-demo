@@ -1,6 +1,12 @@
 import fs from "fs";
+
 import dotenv from "dotenv";
+
 import OpenAI from "openai";
+
+import {
+  getLatestVersion
+} from "./versionResolver.js";
 
 dotenv.config();
 
@@ -39,36 +45,46 @@ export async function analyzePackage(
       vulnerability.package
     ] || [];
 
+  // REAL npm versions
+  const availableVersions =
+    getLatestVersion(
+      vulnerability.package,
+      10
+    );
+
   const prompt = `
 You are a senior dependency remediation expert.
 
 Your task:
-Recommend the BEST stable upgrade version
+Choose the BEST upgrade version
 for this vulnerable package.
 
 Package Details:
 ${JSON.stringify(vulnerability, null, 2)}
 
+IMPORTANT:
+You MUST choose ONLY from the availableVersions list.
+
 Rules:
-1. Recommend the latest stable version fixing the vulnerability
+1. Prefer latest stable secure version
 2. Major upgrades ARE allowed
-3. Prefer stable production-safe versions
-4. Avoid beta, alpha, rc releases
-5. If previous versions failed validation,
-   avoid recommending them again
-6. Include fallbackVersion if possible
-7. Return ONLY valid JSON
+3. Avoid beta/alpha/rc versions
+4. Avoid previously failed versions
+5. Prefer versions outside vulnerableRange
+6. Return ONLY valid JSON
+
+Available stable versions:
+${JSON.stringify(availableVersions, null, 2)}
 
 Previously failed versions:
-${JSON.stringify(failedForPackage)}
+${JSON.stringify(failedForPackage, null, 2)}
 
 ${failureContext}
 
 Return format:
 {
-  "package": "axios",
-  "targetVersion": "1.12.0",
-  "fallbackVersion": "1.11.0",
+  "package": "lodash",
+  "targetVersion": "4.18.1",
   "risk": "high",
   "reason": "Latest stable secure version"
 }

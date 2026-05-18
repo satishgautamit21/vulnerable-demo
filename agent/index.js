@@ -1,30 +1,25 @@
 import fs from "fs";
 
-import { generateAuditReport }
-from "./audit.js";
-
 import {
   analyzePackage,
   getVulnerabilities
-}
-from "./analyzer.js";
+} from "./analyzer.js";
 
 import {
-  upgradePackage
-}
+  getPreviousVersions
+} from "./versionResolver.js";
+
+import { upgradePackage }
 from "./upgrader.js";
 
-import {
-  validateApp
-}
+import { validateApp }
 from "./validator.js";
 
-import {
-  createSnapshot,
-  rollbackChanges,
-  discardSnapshot
-}
+import { rollbackChanges }
 from "./rollback.js";
+
+import { generateAuditReport }
+from "./audit.js";
 
 async function run() {
 
@@ -32,163 +27,141 @@ async function run() {
 AI Upgrade Agent Started
 `);
 
+  let failureContext = "";
+
+  let attempt = 0;
+
   const maxAttempts = 3;
 
   let hasSuccessfulUpgrade = false;
 
-  const failedUpgrades = {};
+  // Generate fresh audit before starting
+  generateAuditReport();
 
-  for (
-    let attempt = 1;
-    attempt <= maxAttempts;
-    attempt++
-  ) {
+  while (attempt < maxAttempts) {
 
     console.log(`
-=========================
-ATTEMPT ${attempt}
-=========================
+=== ATTEMPT ${attempt + 1} ===
 `);
 
-    generateAuditReport();
-
+    // Read ONLY current remaining vulnerabilities
     const vulnerabilities =
       getVulnerabilities();
 
-    if (
-      vulnerabilities.length === 0
-    ) {
+    if (vulnerabilities.length === 0) {
 
       console.log(`
-No vulnerabilities remaining.
+No remaining vulnerabilities.
 `);
+
+      hasSuccessfulUpgrade = true;
 
       break;
     }
 
     console.log(`
-Remaining vulnerabilities:
-${vulnerabilities.length}
+Remaining vulnerable packages:
 `);
 
-    for (const vuln of vulnerabilities) {
+    console.log(
+      vulnerabilities.map(
+        v => v.package
+      )
+    );
+
+    let upgradedAnything = false;
+
+    // Process packages ONE BY ONE
+    for (const vulnerability of vulnerabilities) {
 
       console.log(`
--------------------------
-Processing:
-${vuln.package}
--------------------------
+Processing package:
+${vulnerability.package}
 `);
 
-      let failureContext = "";
+      const recommendation =
+        await analyzePackage(
+          vulnerability,
+          failureContext
+        );
 
-      let packageFixed = false;
-
-      for (let retry = 1; retry <= 2; retry++) {
+      if (
+        !recommendation ||
+        !recommendation.targetVersion
+      ) {
 
         console.log(`
-Retry Attempt:
-${retry}
+No valid recommendation for:
+${vulnerability.package}
 `);
 
-        const recommendation =
-          await analyzePackage(
-            vuln,
-            failureContext
-          );
+        continue;
+      }
 
-        const targetVersion =
-          retry === 1
-            ? recommendation.targetVersion
-            : recommendation.fallbackVersion;
+      const upgraded =
+        upgradePackage(
+          recommendation.package,
+          recommendation.targetVersion
+        );
 
-        if (!targetVersion) {
+      if (!upgraded) {
 
-          console.log(`
-No version recommendation available.
+        console.log(`
+Upgrade install failed for:
+${recommendation.package}
 `);
 
-          break;
-        }
+        continue;
+      }
 
-        createSnapshot();
+      upgradedAnything = true;
 
-        const upgraded =
-          upgradePackage(
-            vuln.package,
-            targetVersion
-          );
-
-        if (!upgraded) {
-
-          rollbackChanges();
-
-          failureContext = `
-Install failed for:
-${vuln.package}@${targetVersion}
-`;
-
-          continue;
-        }
-
-        const validation =
-          validateApp();
-
-        if (validation.success) {
-
-          console.log(`
-Validated:
-${vuln.package}@${targetVersion}
+      console.log(`
+Running validation...
 `);
 
-          discardSnapshot();
+      const isValid =
+        validateApp();
 
-          hasSuccessfulUpgrade = true;
+      if (!isValid) {
 
-          packageFixed = true;
-
-          break;
-        }
+        console.log(`
+Validation failed.
+Rolling back...
+`);
 
         rollbackChanges();
 
-        if (!failedUpgrades[vuln.package]) {
-          failedUpgrades[vuln.package] = [];
-        }
-
-        failedUpgrades[vuln.package]
-          .push(targetVersion);
-
-        fs.writeFileSync(
-          "failed-upgrades.json",
-          JSON.stringify(
-            failedUpgrades,
-            null,
-            2
-          )
-        );
-
         failureContext = `
-Validation failed for:
-${vuln.package}@${targetVersion}
+Upgrade failed for:
+${recommendation.package}@${recommendation.targetVersion}
 
-Error:
-${validation.error}
-
-Previously failed versions:
-${failedUpgrades[vuln.package]
-  .join(", ")}
+Try another stable version.
 `;
+
+        continue;
       }
 
-      if (!packageFixed) {
-
-        console.log(`
-Skipping package:
-${vuln.package}
+      console.log(`
+Validation passed for:
+${recommendation.package}
 `);
-      }
+
+      // IMPORTANT:
+      // refresh audit after successful validation
+      generateAuditReport();
     }
+
+    if (!upgradedAnything) {
+
+      console.log(`
+No successful upgrades possible.
+`);
+
+      break;
+    }
+
+    attempt++;
   }
 
   if (process.env.GITHUB_OUTPUT) {
@@ -199,11 +172,18 @@ ${vuln.package}
     );
   }
 
-  console.log(`
-=================================
-AI Upgrade Agent Completed
-=================================
+  if (hasSuccessfulUpgrade) {
+
+    console.log(`
+Agent completed successfully.
 `);
+
+  } else {
+
+    console.log(`
+Agent finished without fully resolving vulnerabilities.
+`);
+  }
 }
 
 run();

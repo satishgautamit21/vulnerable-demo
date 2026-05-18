@@ -2,29 +2,18 @@ import { execSync } from "child_process";
 
 export function generateAuditReport() {
 
-  console.log(`
-Generating fresh audit report...
-`);
+  console.log("\nGenerating fresh audit report...\n");
 
   try {
 
     execSync(
-      "npm audit --json > audit-report.json || true",
-      {
-        stdio: "inherit",
-        shell: true
-      }
+      "npm audit --json > audit-report.json",
+      { stdio: "inherit", shell: true }
     );
 
-    console.log(`
-Audit report generated successfully.
-`);
+  } catch {
 
-  } catch (err) {
-
-    console.log(`
-Failed to generate audit report.
-`);
-
+    // npm audit exits non-zero when vulnerabilities exist
+    // that's expected
   }
 }
