@@ -1,47 +1,30 @@
 import fs from "fs";
 import { execSync } from "child_process";
-import { calculateRisk } from "./risk.js";
 
-export function upgradePackages() {
+export function upgradePackages(plan) {
     let hasChanges = false;
-    const raw = fs.readFileSync(
+    fs.writeFileSync(
         "upgrade-plan.json",
-        "utf-8"
+        JSON.stringify(plan, null, 2)
     );
-
-    const plan = JSON.parse(raw);
 
     const upgrades =
         plan.upgrades || [];
 
     for (const item of upgrades) {
 
-        const planRisk = item.risk || "unknown";
-        const actualRisk =
-            item.risk || calculateRisk(
-                item.currentVersion,
-                item.targetVersion
-            );
-
-        console.log(`
-            Plan risk: ${planRisk}
-            Calculated risk: ${actualRisk}
-        `);
-
-        if (actualRisk !== "low") {
-
+        if (!item.targetVersion || item.targetVersion === item.currentVersion) {
             console.log(`
                 Skipping ${item.package}
-                because calculated risk is
-                ${actualRisk}
+                because targetVersion is missing or unchanged
             `);
-
             continue;
         }
 
         console.log(`
             Upgrading:
             ${item.package}@${item.targetVersion}
+            Plan risk: ${item.risk || "unknown"}
         `);
 
         try {

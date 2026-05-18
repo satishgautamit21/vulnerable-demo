@@ -9,7 +9,7 @@ const client = new OpenAI({
     baseURL: "https://openrouter.ai/api/v1"
 });
 
-export async function analyzeAudit() {
+export async function analyzeAudit(failureContext = "") {
 
     console.log(
         "\nReading audit report...\n"
@@ -67,19 +67,18 @@ export async function analyzeAudit() {
 
     console.log(summary);
 
-    const prompt = `You are a senior dependency security expert. Your task is to RECOMMEND SAFE UPGRADES for ALL vulnerable packages.
+    const prompt = `You are a senior dependency security expert. Your task is to RECOMMEND THE LATEST STABLE UPGRADE for each vulnerable package.
 
 For EACH vulnerable package in the list:
-1. Find the latest STABLE version that fixes the vulnerability
-2. Prefer patch/minor upgrades (same major version)
-3. For 0.x versions, minor upgrades are acceptable
-4. Include every package with a fixAvailable solution
-5. Do NOT return an empty upgrades array if vulnerabilities exist
+1. Identify the latest stable version that fixes the vulnerability
+2. Use the newest available stable release even if it is a major upgrade
+3. If no fix is available, omit the package from upgrades
+4. Do not return an empty upgrades array when vulnerabilities exist and fixes are available
+5. Include a short reason and a risk label for each recommended upgrade
 
+${failureContext ? `Previous attempt failed with context:\n${failureContext}\nIf the previous selection caused validation failure, recommend alternate stable versions or skip packages that likely break the build. Trial both higher and lower stable versions if needed.\n\n` : ""}
 Current vulnerable packages:
 ${JSON.stringify(summary, null, 2)}
-
-For each package, recommend the safest upgrade version that fixes the vulnerability.
 
 Return ONLY valid JSON with NO other text:
 {
@@ -87,10 +86,10 @@ Return ONLY valid JSON with NO other text:
     {
       "package": "package-name",
       "currentVersion": "0.21.0",
-      "targetVersion": "0.27.2",
+      "targetVersion": "1.16.1",
       "severity": "high",
       "risk": "low",
-      "reason": "Brief explanation"
+      "reason": "Latest stable version fixing the vulnerability"
     }
   ]
 }`;
